@@ -1,0 +1,15 @@
+{% extends "master.html" %}
+
+{% block title %}
+  {{ myprofile.name }}
+{% endblock %}
+
+
+{% block content %}
+    <h1>{{ myprofile.name }}</h1>
+    
+    <p>Energy: {{ myprofile.name }}</p>
+    <p>Member since: {{ myprofile.name }}</p>
+
+    <p>Back to <a href="/profiles">My profiles</a></p>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "master.html" %}
+
+{% block title %}
+  Accounts - SmartJack
+{% endblock %}
+
+
+{% block content %}
+    <h1>Accounts</h1>
+  
+    <ul>
+    {% for x in myaccounts %}
+        <li><a href="details/{{ x.id }}">{{ x.firstname }} {{ x.lastname }}</a></li>
+    {% endfor %}
+    </ul>
+
+    <p><a href="/">HOME</a></p>
+{% endblock %}
