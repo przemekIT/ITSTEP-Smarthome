@@ -1,0 +1,159 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>SmartKey - Urzadzenia</title>
+
+    <!-- Zaladowanie Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+<!-- Pasek nawigacyjny (wspolny dla calej aplikacji) -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">SmartKey</a>
+        <div class="d-flex">
+            <a class="btn btn-outline-light me-2" href="/">Dashboard</a>
+            <a class="btn btn-light me-2" href="/devices/">Urządzenia</a>
+            <a class="btn btn-outline-light me-2" href="/rules/">Reguły</a>
+            <a class="btn btn-outline-light me-2" href="/devices/logs/">Logi</a>
+            <a class="btn btn-outline-light me-2" href="/settings/">Ustawienia</a>
+            <a class="btn btn-outline-light" href="/admin/">Admin</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+
+    <!-- Naglowek + przycisk dodania nowego urzadzenia -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0 text-primary">Lista urządzeń</h2>
+        <a href="{% url 'device_create' %}" class="btn btn-success">+ Dodaj urządzenie</a>
+    </div>
+    <!-- Przycisk szybkiego dostepu do logow -->
+    <div class="mb-3">
+        <a href="{% url 'event_log_list' %}" class="btn btn-outline-secondary btn-sm">
+            Zobacz logi zdarzeń
+        </a>
+    </div>
+
+
+    <!-- Sprawdzenie czy istnieja jakiekolwiek urzadzenia -->
+    {% if devices %}
+    <table class="table table-striped table-bordered shadow-sm align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Nazwa</th>
+                <th>Typ</th>
+                <th>Pokój</th>
+                <th>Status</th>            <!-- Status + przycisk wlacz/wylacz -->
+                <th>Temperatura</th>          <!-- Wartosc + link Edytuj -->
+                <th>Ostatnia aktualizacja</th>
+                <th>Akcje</th>            <!-- Tylko usuniecie -->
+            </tr>
+        </thead>
+
+        <tbody>
+        {% for d in devices %}
+            <tr>
+
+                <!-- Nazwa urzadzenia -->
+                <td>{{ d.name }}</td>
+
+                <!-- Typ urzadzenia (sensor, light, plug, itp.) -->
+                <td>{{ d.get_type_display }}</td>
+
+                <!-- Nazwa pokoju -->
+                <td>{{ d.room }}</td>
+
+                <!-- STATUS + PRZYCISK ON/OFF
+                     - dla czujnika: wyswietlamy tylko znacznik "Czujnik"
+                     - dla innych urzadzen: znacznik + przycisk wlacz/wylacz w tej samej kolumnie
+                -->
+                <td>
+                    {% if d.type == 'sensor' %}
+                        <!-- Czujnik: nie ma przelacznika, tylko opis -->
+                        <span class="badge bg-info text-dark me-2">Czujnik</span>
+                    {% else %}
+                        <!-- Dla light/plug pokazujemy stan -->
+                        {% if d.status %}
+                            <span class="badge bg-success me-2">Włączone</span>
+                        {% else %}
+                            <span class="badge bg-secondary me-2">Wyłączone</span>
+                        {% endif %}
+
+                        <!-- Przycisk wlacz / wylacz obok statusu:
+                             - jesli wlaczone -> zielony przycisk "Wylacz"
+                             - jesli wylaczone -> zolty przycisk "Wlacz"
+                        -->
+                        <a href="{% url 'toggle_device' d.id %}"
+                           class="btn btn-sm {% if d.status %}btn-success{% else %}btn-warning{% endif %}">
+                            {% if d.status %}
+                                Wylacz
+                            {% else %}
+                                Wlacz
+                            {% endif %}
+                        </a>
+                    {% endif %}
+                </td>
+
+                <!-- WARTOSC + LINK EDYTUJ
+                     - dla czujnika pokazujemy wartosc + przycisk "Edytuj"
+                     - dla innych urzadzen wartosc nie ma sensu -> pokazujemy "-" + Edytuj
+                -->
+                <td>
+                    {% if d.type == 'sensor' %}
+                        <!-- Wartosc czujnika (np. temperatura) -->
+                        <span class="me-2">
+                            {{ d.value|default:"-" }}
+                        </span>
+                    {% else %}
+                        <!-- Urzadzenia sterowalne nie maja wartosci liczbowej -->
+                        <span class="me-2">-</span>
+                    {% endif %}
+
+                    <!-- Link "Edytuj" obok wartosci (dla kazdego typu urzadzenia) -->
+                    <a href="{% url 'device_update' d.id %}" class="btn btn-sm btn-secondary">
+                        Edytuj
+                    </a>
+                </td>
+
+                <!-- OSTATNIA AKTUALIZACJA -->
+                <td>{{ d.last_updated|date:"d/m/Y H:i" }}</td>
+
+                <!-- AKCJE: tylko USUN (czerwony przycisk) -->
+                <td>
+                    <!-- Formularz POST do usuniecia urzadzenia -->
+                    <form method="post"
+                          action="{% url 'device_delete' d.id %}"
+                          onsubmit="return confirm('Na pewno chcesz usunac to urzadzenie?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-danger">
+                            Usuń
+                        </button>
+                    </form>
+                </td>
+
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    {% else %}
+        <!-- Komunikat gdy nie ma zadnych urzadzen w bazie -->
+        <div class="alert alert-info">
+            Brak urządzeń w systemie. Dodaj nowe urządzenie przyciskiem wyżej.
+        </div>
+    {% endif %}
+
+</div>
+
+<footer class="text-center mt-5 mb-3 text-muted">
+    <small>SmartKey - Symulacja inteligentnego domu</small>
+</footer>
+
+</body>
+</html>
